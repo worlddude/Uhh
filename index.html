@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aftensmad</title>
+<meta name="description" content="Vælg ugens aftensmad og få indkøbslisten lavet.">
+<meta name="theme-color" content="#F5F7FB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1A38" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aftensmad">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='29' fill='%23fff' stroke='%232443A6' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='15' fill='%23F7D65B'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F7FB; --flade:#FFFFFF; --dug:#E4EAF7; --linje:#CBD5EC;
+  --blaa:#2443A6; --blaa-tekst:#FFFFFF;
+  --tekst:#14213F; --daempet:#56637F;
+  --smoer:#F7D65B; --smoer-tekst:#2A2204; --valgt-bg:#FBF0C2;
+  --fare:#A63A2A; --fokus:#2443A6;
+  --skrift:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0F1A38; --flade:#17254B; --dug:#1F3060; --linje:#30427A;
+    --blaa:#9DB3F7; --blaa-tekst:#0F1A38;
+    --tekst:#EEF2FB; --daempet:#A7B3D1;
+    --smoer:#F3D25E; --smoer-tekst:#2A2204; --valgt-bg:#26355F;
+    --fare:#F0907F; --fokus:#F3D25E;
+    color-scheme:dark;
+  }
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--tekst);
+  font:400 16px/1.45 var(--skrift);
+  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+body.laast{overflow:hidden}
+h1,h2,p,ul{margin:0;padding:0}
+ul{list-style:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;text-align:left;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--fokus);outline-offset:2px;border-radius:6px}
+
+#app{
+  max-width:520px; margin:0 auto;
+  padding:calc(env(safe-area-inset-top,0px) + 22px) 20px calc(env(safe-area-inset-bottom,0px) + 104px);
+}
+
+/* ---------- Top ---------- */
+.top h1{font-weight:800;font-stretch:78%;font-size:42px;line-height:1;letter-spacing:-.01em;color:var(--blaa)}
+.top.smal h1{font-size:34px}
+.top .dato{margin-top:6px;color:var(--daempet)}
+.tilbage{display:inline-flex;align-items:center;min-height:44px;margin-bottom:6px;color:var(--blaa);font-weight:600}
+.tilbage::before{content:"";width:9px;height:9px;border-left:2px solid;border-bottom:2px solid;transform:rotate(45deg);margin:0 10px 0 3px}
+
+/* ---------- Knapper ---------- */
+.knap{
+  display:inline-flex;align-items:center;justify-content:center;text-align:center;
+  min-height:48px;padding:0 22px;border-radius:999px;
+  background:var(--blaa);color:var(--blaa-tekst);font-weight:650;
+  transition:transform .08s ease;
+}
+.knap:active{transform:scale(.97)}
+.knap.let{background:transparent;color:var(--blaa);box-shadow:inset 0 0 0 1.5px var(--linje)}
+.knap.fare{background:transparent;color:var(--fare);box-shadow:inset 0 0 0 1.5px var(--linje)}
+.knap.bred{display:flex;width:100%}
+.knap:disabled{background:var(--dug);color:var(--daempet);box-shadow:none;cursor:default}
+.knap:disabled:active{transform:none}
+
+/* ---------- Påmindelse ---------- */
+.minder{margin-top:26px;padding:22px 20px;border-radius:22px;background:var(--smoer);color:var(--smoer-tekst)}
+.minder h2{font-size:30px;line-height:1.05;font-weight:800;font-stretch:78%;text-wrap:balance}
+.minder p{margin-top:8px}
+.minder .knap{margin-top:16px;background:#14213F;color:#fff}
+
+/* ---------- I aften ---------- */
+.iaften{margin-top:28px}
+.iaften h2{font-size:16px;font-weight:600;color:var(--daempet)}
+.iaften-ret{display:block;margin-top:2px;font-size:46px;line-height:1.02;font-weight:800;font-stretch:76%;letter-spacing:-.015em;color:var(--blaa);text-wrap:balance}
+.iaften p{margin-top:6px;color:var(--daempet)}
+
+/* ---------- Ugesektion ---------- */
+.uge{margin-top:36px}
+.uge-hoved{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.uge-hoved h2{font-size:26px;font-weight:750;font-stretch:80%;line-height:1.1}
+.uge-hoved span{font-size:14px;color:var(--daempet);text-align:right}
+.uge-tom{margin-top:8px;color:var(--daempet)}
+.uge > .knap{margin-top:14px}
+.handlinger{display:flex;gap:10px;margin-top:16px}
+.handlinger .knap{flex:1;padding:0 12px}
+
+/* Tallerkener: ugens syv dage */
+.tallerkener{display:flex;gap:6px;justify-content:space-between;margin-top:16px}
+.tal{position:relative;flex:1;max-width:44px;aspect-ratio:1;border-radius:50%;border:2px solid var(--blaa);background:var(--flade);display:grid;place-items:center}
+.tal::before{content:"";position:absolute;inset:4px;border-radius:50%;border:1px solid var(--linje)}
+.tal i{position:relative;font-style:normal;font-size:14px;font-weight:700;color:var(--blaa)}
+.tal.fyldt::before{background:var(--smoer);border-color:var(--smoer)}
+.tal.fyldt i{color:var(--smoer-tekst)}
+.tal.idag::after{content:"";position:absolute;bottom:-9px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--blaa)}
+.tal.pop::before{animation:pop .32s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.3)}}
+
+.dagliste{margin-top:20px;border-top:1px solid var(--linje)}
+.dagrk{display:flex;width:100%;align-items:baseline;gap:14px;padding:13px 0;min-height:50px;border-bottom:1px solid var(--linje)}
+.dagrk .dag{flex:none;width:46px;font-size:14px;color:var(--daempet)}
+.dagrk .navn{flex:1;font-weight:600}
+.dagrk.idag .dag{color:var(--blaa);font-weight:700}
+
+/* ---------- Planlægning ---------- */
+.status{
+  position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:16px;
+  width:calc(100% + 40px);margin:18px -20px 0;padding:10px 20px 16px;
+  background:var(--bg);border-bottom:1px solid var(--linje);
+}
+.status .tallerkener{flex:1;margin-top:0;gap:5px}
+.status .tal{max-width:36px}
+.status .tal i{font-size:13px}
+.status-tekst{flex:none;font-weight:700;color:var(--blaa);white-space:nowrap}
+
+.afsnit{margin-top:28px}
+.afsnit > h2{font-size:26px;font-weight:750;font-stretch:80%;line-height:1.1}
+.afsnit > p{margin-top:6px;color:var(--daempet)}
+
+.bud{margin-top:14px;border-top:1px solid var(--linje)}
+.bud-rk{margin:0 -20px;padding:14px 20px 16px;border-bottom:1px solid var(--linje)}
+.bud-rk.valgt{background:var(--valgt-bg);box-shadow:inset 5px 0 0 var(--smoer)}
+.bud-navn{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.bud-navn .navn{font-size:21px;font-weight:700;font-stretch:86%;line-height:1.2}
+.bud-navn .meta{flex:none;font-size:14px;color:var(--daempet);white-space:nowrap}
+.bud-note{color:var(--daempet);font-size:15px}
+.bud-valg{display:flex;gap:10px;margin-top:10px}
+.bud-valg .knap{flex:1;min-height:46px;padding:0 12px}
+.maerke{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:30px;padding:0 12px;border-radius:999px;background:var(--smoer);color:var(--smoer-tekst);font-size:14px;font-weight:700;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chips .maerke{min-height:40px;padding:0 14px}
+
+.ingr{margin:6px 0 4px;font-size:15px;color:var(--daempet)}
+.ingr li{display:flex;justify-content:space-between;gap:16px;padding:4px 0}
+.ingr li span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+
+.bund{
+  position:fixed;left:0;right:0;bottom:0;z-index:10;
+  padding:12px 20px calc(env(safe-area-inset-bottom,0px) + 12px);
+  background:var(--bg);border-top:1px solid var(--linje);
+}
+.bund .knap{display:flex;width:100%;max-width:480px;margin:0 auto;min-height:54px;font-size:17px}
+
+/* ---------- Indkøb ---------- */
+.seg{display:flex;gap:4px;padding:4px;margin-top:18px;border-radius:999px;background:var(--dug)}
+.seg button{flex:1;min-height:42px;border-radius:999px;text-align:center;font-weight:600;color:var(--daempet)}
+.seg button[aria-pressed="true"]{background:var(--flade);color:var(--blaa)}
+
+.fremdrift{margin-top:22px}
+.fremdrift p{font-weight:600}
+.fremdrift .spor{height:8px;margin-top:8px;border-radius:999px;background:var(--dug);overflow:hidden}
+.fremdrift .fyld{height:100%;border-radius:999px;background:var(--blaa);transition:width .25s ease}
+
+.gruppe{margin-top:30px}
+.gruppe h2{font-size:22px;font-weight:750;font-stretch:84%;line-height:1.15}
+.gruppe .under{font-size:14px;color:var(--daempet)}
+.varer{margin-top:8px;border-top:1px solid var(--linje)}
+.vare{display:flex;width:100%;align-items:center;gap:14px;padding:10px 0;min-height:54px;border-bottom:1px solid var(--linje)}
+.boks{flex:none;position:relative;width:26px;height:26px;border-radius:7px;border:2px solid var(--blaa)}
+.vare[aria-checked="true"] .boks{background:var(--blaa)}
+.vare[aria-checked="true"] .boks::after{content:"";position:absolute;left:7px;top:2px;width:7px;height:13px;border:solid var(--blaa-tekst);border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
+.vnavn{flex:1;min-width:0}
+.vnavn small{display:block;font-size:13px;color:var(--daempet)}
+.vare[aria-checked="true"] .vnavn b{text-decoration:line-through;color:var(--daempet)}
+.vnavn b{font-weight:500}
+.vm{flex:none;white-space:nowrap;color:var(--daempet);font-variant-numeric:tabular-nums}
+.ingen{margin-top:8px;color:var(--daempet)}
+.nulstil{margin-top:26px}
+
+/* ---------- Indstillinger ---------- */
+.indst{margin-top:26px;padding-top:22px;border-top:1px solid var(--linje)}
+.indst h2{font-size:22px;font-weight:750;font-stretch:84%;line-height:1.15}
+.indst p{margin-top:4px;color:var(--daempet);font-size:15px}
+.dagvalg{display:flex;gap:5px;margin-top:14px}
+.dagvalg button{flex:1;min-height:46px;border-radius:12px;background:var(--dug);text-align:center;font-size:14px;font-weight:600}
+.dagvalg button[aria-pressed="true"]{background:var(--blaa);color:var(--blaa-tekst)}
+.taeller{display:flex;align-items:center;gap:18px;margin-top:14px}
+.taeller button{width:50px;height:50px;border-radius:50%;background:var(--dug);color:var(--blaa);font-size:26px;line-height:1;text-align:center}
+.taeller button:disabled{opacity:.4}
+.taeller output{min-width:2ch;text-align:center;font-size:32px;font-weight:800;font-stretch:80%}
+.indst .knap{margin-top:14px}
+
+/* ---------- Faner ---------- */
+#faner{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--flade);border-top:1px solid var(--linje);padding-bottom:env(safe-area-inset-bottom,0px)}
+#faner .inde{display:flex;max-width:520px;margin:0 auto}
+.fane{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:60px;padding:9px 4px 7px;font-size:12px;font-weight:600;color:var(--daempet)}
+.fane svg{width:24px;height:24px}
+.fane[aria-current="page"]{color:var(--blaa)}
+.fane .prik{position:absolute;top:7px;left:calc(50% + 7px);width:11px;height:11px;border-radius:50%;background:var(--smoer);border:2px solid var(--flade);box-shadow:0 0 0 1px var(--smoer-tekst)}
+body.planlaegger #faner{display:none}
+
+/* ---------- Ark (bundark) ---------- */
+.ark-bag{position:fixed;inset:0;z-index:20;background:rgba(8,15,36,.55);animation:toning .18s ease}
+.ark{
+  position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:520px;margin:0 auto;
+  max-height:88vh;overflow:auto;-webkit-overflow-scrolling:touch;
+  padding:24px 20px calc(env(safe-area-inset-bottom,0px) + 20px);
+  border-radius:24px 24px 0 0;background:var(--flade);
+  animation:op .24s cubic-bezier(.2,.8,.2,1);
+}
+.ark:focus{outline:none}
+@keyframes op{from{transform:translateY(100%)}}
+@keyframes toning{from{opacity:0}}
+.ark-titel{font-size:28px;font-weight:800;font-stretch:78%;line-height:1.08;text-wrap:balance}
+.ark-under{margin-top:4px;color:var(--daempet)}
+.ark-note{margin-top:14px;color:var(--daempet);font-size:15px}
+.arkliste{margin-top:14px;border-top:1px solid var(--linje)}
+.arkrk{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;min-height:56px;border-bottom:1px solid var(--linje)}
+.arkrk:disabled{opacity:.45;cursor:default}
+.arkrk .d{flex:none;font-weight:650;white-space:nowrap}
+.arkrk .d small{margin-left:8px;font-weight:400;font-size:14px;color:var(--daempet)}
+.arkrk .s{flex:1;min-width:0;font-size:14px;color:var(--daempet);text-align:right}
+.arkrk .s.optaget{color:var(--tekst);font-weight:600}
+.arkrk .knap{flex:none;min-height:40px;padding:0 16px}
+.ark .ingr{margin-top:14px;font-size:16px;border-top:1px solid var(--linje)}
+.ark .ingr li{padding:10px 0;border-bottom:1px solid var(--linje)}
+.ark .ingr li span:first-child{color:var(--tekst)}
+.ark > .knap{margin-top:18px}
+.ark .handlinger{margin-top:20px}
+
+/* ---------- Toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);z-index:30;
+  transform:translate(-50%,12px);opacity:0;pointer-events:none;
+  padding:11px 18px;border-radius:999px;background:var(--tekst);color:var(--bg);
+  font-weight:600;font-size:15px;white-space:nowrap;transition:opacity .2s ease,transform .2s ease;
+}
+#toast.vis{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="faner" aria-label="Sektioner"></nav>
+<div id="ark"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* =====================================================================
+   1. RETTER (PLADSHOLDERE)
+   Skift listen ud med de rigtige opskrifter senere.
+   Format: [navn, mængde, enhed, kategori]. Mængderne gælder 4 personer.
+   Enheder: g, dl, stk, dåse, pk, fed, spsk, tsk, glas, pose, bundt, skive
+   Kategorier: gro, kod, mej, bro, kol, fro (se KAT længere nede)
+   ===================================================================== */
+const BASIS_PERSONER = 4;
+
+const RETTER = [
+  { id:'bolognese', navn:'Spaghetti bolognese', tid:40, ing:[
+    ['Hakket oksekød',500,'g','kod'],['Spaghetti',400,'g','kol'],['Hakkede tomater',2,'dåse','kol'],
+    ['Løg',2,'stk','gro'],['Gulerødder',2,'stk','gro'],['Hvidløg',2,'fed','gro'],['Parmesan',50,'g','mej']]},
+  { id:'frikadeller', navn:'Frikadeller med kartofler og brun sovs', tid:45, ing:[
+    ['Hakket kalv og flæsk',500,'g','kod'],['Kartofler',1000,'g','gro'],['Løg',1,'stk','gro'],['Æg',1,'stk','mej'],
+    ['Mælk',1,'dl','mej'],['Hvedemel',3,'spsk','kol'],['Brun sovs',1,'pk','kol'],['Agurkesalat',1,'glas','kol']]},
+  { id:'karrykylling', navn:'Kylling i karry med ris', tid:30, ing:[
+    ['Kyllingebryst',500,'g','kod'],['Ris',300,'g','kol'],['Løg',1,'stk','gro'],['Æbler',1,'stk','gro'],
+    ['Karry',2,'spsk','kol'],['Kokosmælk',1,'dåse','kol']]},
+  { id:'lasagne', navn:'Lasagne', tid:75, ing:[
+    ['Hakket oksekød',500,'g','kod'],['Lasagneplader',1,'pk','kol'],['Hakkede tomater',2,'dåse','kol'],['Løg',1,'stk','gro'],
+    ['Gulerødder',2,'stk','gro'],['Mælk',5,'dl','mej'],['Revet ost',200,'g','mej'],['Hvedemel',3,'spsk','kol']]},
+  { id:'tacos', navn:'Tacos', tid:25, ing:[
+    ['Hakket oksekød',500,'g','kod'],['Tacoskaller',1,'pk','kol'],['Tacokrydderi',1,'pk','kol'],['Salat',1,'stk','gro'],
+    ['Tomater',3,'stk','gro'],['Agurk',1,'stk','gro'],['Revet ost',150,'g','mej'],['Creme fraiche',2,'dl','mej']]},
+  { id:'pizza', navn:'Hjemmelavet pizza', tid:35, ing:[
+    ['Pizzadej',2,'pk','mej'],['Pizzasauce',1,'glas','kol'],['Revet mozzarella',300,'g','mej'],
+    ['Skinke',1,'pk','kod'],['Champignon',250,'g','gro']]},
+  { id:'laks', navn:'Laks med ovnkartofler og broccoli', tid:40, ing:[
+    ['Laksefilet',500,'g','kod'],['Kartofler',800,'g','gro'],['Broccoli',1,'stk','gro'],
+    ['Citron',1,'stk','gro'],['Creme fraiche',2,'dl','mej']]},
+  { id:'bollerikarry', navn:'Boller i karry', tid:45, ing:[
+    ['Hakket kalv og flæsk',500,'g','kod'],['Ris',300,'g','kol'],['Løg',1,'stk','gro'],['Æg',1,'stk','mej'],
+    ['Hvedemel',3,'spsk','kol'],['Karry',2,'spsk','kol'],['Fløde',2,'dl','mej']]},
+  { id:'carbonara', navn:'Pasta carbonara', tid:20, ing:[
+    ['Spaghetti',400,'g','kol'],['Bacon',200,'g','kod'],['Æg',4,'stk','mej'],['Parmesan',100,'g','mej']]},
+  { id:'burger', navn:'Burgere med pommes frites', tid:30, ing:[
+    ['Hakket oksekød',500,'g','kod'],['Burgerboller',4,'stk','bro'],['Salat',1,'stk','gro'],['Tomater',2,'stk','gro'],
+    ['Cheddar',4,'skive','mej'],['Pommes frites',1,'pose','fro']]},
+  { id:'wraps', navn:'Wraps med kylling', tid:25, ing:[
+    ['Kyllingebryst',500,'g','kod'],['Tortillas',1,'pk','bro'],['Peberfrugt',2,'stk','gro'],['Løg',1,'stk','gro'],
+    ['Revet ost',150,'g','mej'],['Creme fraiche',2,'dl','mej']]},
+  { id:'hakkeboef', navn:'Hakkebøf med bløde løg', tid:40, ing:[
+    ['Hakket oksekød',600,'g','kod'],['Løg',4,'stk','gro'],['Kartofler',1000,'g','gro'],['Smør',50,'g','mej'],
+    ['Brun sovs',1,'pk','kol'],['Rødbeder',1,'glas','kol']]},
+  { id:'tomatsuppe', navn:'Tomatsuppe med flute', tid:25, ing:[
+    ['Hakkede tomater',3,'dåse','kol'],['Løg',1,'stk','gro'],['Hvidløg',2,'fed','gro'],['Fløde',2,'dl','mej'],['Flute',2,'stk','bro']]},
+  { id:'fiskefrikadeller', navn:'Fiskefrikadeller med kartofler og remoulade', tid:30, ing:[
+    ['Fiskefars',500,'g','kod'],['Kartofler',800,'g','gro'],['Gulerødder',4,'stk','gro'],['Remoulade',1,'stk','kol'],['Citron',1,'stk','gro']]},
+  { id:'chili', navn:'Chili con carne', tid:45, ing:[
+    ['Hakket oksekød',500,'g','kod'],['Kidneybønner',1,'dåse','kol'],['Hakkede tomater',2,'dåse','kol'],['Løg',2,'stk','gro'],
+    ['Chili',1,'stk','gro'],['Ris',300,'g','kol']]},
+  { id:'pestopasta', navn:'Pasta med kylling og pesto', tid:25, ing:[
+    ['Penne',400,'g','kol'],['Kyllingebryst',400,'g','kod'],['Pesto',1,'glas','kol'],['Cherrytomater',250,'g','gro'],['Parmesan',50,'g','mej']]},
+  { id:'stegtflaesk', navn:'Stegt flæsk med persillesovs', tid:50, ing:[
+    ['Stegeflæsk',800,'g','kod'],['Kartofler',1000,'g','gro'],['Persille',1,'bundt','gro'],['Mælk',5,'dl','mej'],
+    ['Hvedemel',3,'spsk','kol'],['Smør',25,'g','mej']]},
+  { id:'wok', navn:'Wok med kylling og nudler', tid:25, ing:[
+    ['Kyllingebryst',400,'g','kod'],['Nudler',250,'g','kol'],['Wokgrønt',1,'pose','fro'],['Sojasauce',4,'spsk','kol'],['Hvidløg',2,'fed','gro']]},
+  { id:'biksemad', navn:'Biksemad med spejlæg', tid:35, ing:[
+    ['Kartofler',800,'g','gro'],['Løg',2,'stk','gro'],['Oksekød i tern',400,'g','kod'],['Æg',4,'stk','mej'],['Rødbeder',1,'glas','kol']]},
+  { id:'moerbradgryde', navn:'Mørbradgryde med ris', tid:45, ing:[
+    ['Svinemørbrad',600,'g','kod'],['Champignon',250,'g','gro'],['Bacon',150,'g','kod'],['Fløde',2.5,'dl','mej'],
+    ['Paprika',1,'spsk','kol'],['Ris',300,'g','kol']]},
+  { id:'tortellini', navn:'Tortellini i flødesovs', tid:20, ing:[
+    ['Tortellini',500,'g','mej'],['Fløde',2.5,'dl','mej'],['Skinke i tern',150,'g','kod'],['Ærter',200,'g','fro'],['Parmesan',50,'g','mej']]},
+  { id:'porresuppe', navn:'Kartoffel-porresuppe', tid:40, ing:[
+    ['Kartofler',600,'g','gro'],['Porrer',3,'stk','gro'],['Fløde',2,'dl','mej'],['Bacon',150,'g','kod'],['Flute',2,'stk','bro']]},
+  { id:'hotdogs', navn:'Hotdogs', tid:15, ing:[
+    ['Pølser',8,'stk','kod'],['Pølsebrød',8,'stk','bro'],['Ristede løg',1,'pk','kol'],['Agurkesalat',1,'glas','kol'],['Ketchup',1,'stk','kol']]},
+  { id:'fiskefilet', navn:'Fiskefilet med pommes frites', tid:25, ing:[
+    ['Paneret fiskefilet',1,'pk','fro'],['Pommes frites',1,'pose','fro'],['Remoulade',1,'stk','kol'],['Citron',1,'stk','gro'],['Ærter',200,'g','fro']]},
+
+  /* To eksempler på flerdagesretter. De bliver sorteret fra af erFlerdages() herunder. */
+  { id:'gullasch1', navn:'Gullasch, dag 1', tid:90, ing:[['Oksekød i tern',1000,'g','kod'],['Løg',3,'stk','gro'],['Paprika',2,'spsk','kol']]},
+  { id:'gullasch2', navn:'Gullasch, dag 2 med kartoffelmos', tid:25, ing:[['Kartofler',1000,'g','gro'],['Mælk',2,'dl','mej']]}
+];
+
+/* Faste muligheder, som altid kan vælges og gerne flere dage i samme uge. */
+const FASTE = [
+  { id:'rugbroed', navn:'Rugbrødsmadder', note:'Nemt og hurtigt', fast:true, ing:[
+    ['Rugbrød',1,'pk','bro'],['Smør',1,'pk','mej'],['Leverpostej',1,'stk','kod'],['Spegepølse',1,'pk','kod'],['Agurk',1,'stk','gro']]},
+  { id:'lavselv', navn:'Lav selv', note:'Hver mand laver det, de har lyst til', fast:true, ing:[] }
+];
+
+const KAT = [['gro','Frugt og grønt'],['kod','Kød og fisk'],['mej','Mejeri og køl'],['bro','Brød'],['kol','Kolonial'],['fro','Frost']];
+
+/* Retter med "dag 1", "dag 2", "dag et" eller "dag to" i navnet er ikke med i forslagene. */
+function erFlerdages(r){ return /(^|[^a-zæøå])dag\s*(1|2|et|ét|to)(?![a-zæøå0-9])/i.test(r.navn); }
+
+const AKTIVE = RETTER.filter(function(r){ return !erFlerdages(r); });
+const ALLE = {};
+RETTER.concat(FASTE).forEach(function(r){ ALLE[r.id] = r; });
+function ret(id){ return ALLE[id]; }
+
+/* =====================================================================
+   2. DATOER
+   ===================================================================== */
+const DAGE = ['Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag','Søndag'];
+const DAGE_KORT = ['Man','Tir','Ons','Tor','Fre','Lør','Søn'];
+const DAGE_BOGSTAV = ['M','T','O','T','F','L','S'];
+const MDR = ['januar','februar','marts','april','maj','juni','juli','august','september','oktober','november','december'];
+const MDR_KORT = ['jan.','feb.','mar.','apr.','maj','jun.','jul.','aug.','sep.','okt.','nov.','dec.'];
+
+function idag(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
+function ugedag(d){ return (d.getDay() + 6) % 7; }               /* 0 = mandag */
+function plusDage(d, n){ const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function mandag(d){ const x = plusDage(d, -ugedag(d)); x.setHours(0,0,0,0); return x; }
+function noegle(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function fraNoegle(k){ const a = k.split('-').map(Number); return new Date(a[0], a[1]-1, a[2]); }
+function ugeNr(d){
+  const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7) + 3);
+  const f = new Date(Date.UTC(x.getUTCFullYear(), 0, 4));
+  return 1 + Math.round(((x - f) / 864e5 - 3 + ((f.getUTCDay() + 6) % 7)) / 7);
+}
+function periode(k){
+  const a = fraNoegle(k), b = plusDage(a, 6);
+  return a.getMonth() === b.getMonth()
+    ? a.getDate() + '.–' + b.getDate() + '. ' + MDR[b.getMonth()]
+    : a.getDate() + '. ' + MDR_KORT[a.getMonth()] + ' – ' + b.getDate() + '. ' + MDR_KORT[b.getMonth()];
+}
+function ugeTekst(k){ return 'Uge ' + ugeNr(fraNoegle(k)) + ', ' + periode(k); }
+function denneUge(){ return noegle(mandag(idag())); }
+function naesteUge(){ return noegle(plusDage(mandag(idag()), 7)); }
+
+/* =====================================================================
+   3. DATA
+   Alt gemmes samlet under én nøgle. Når husstanden skal dele planen,
+   er det hent() og gem(), der skal tale med Supabase i stedet.
+   ===================================================================== */
+const LAGER = 'aftensmad.v1';
+let S;
+
+function hent(){
+  try { const t = localStorage.getItem(LAGER); return t ? JSON.parse(t) : null; }
+  catch (e) { return null; }
+}
+function gem(){
+  try { localStorage.setItem(LAGER, JSON.stringify(S)); } catch (e) { /* kører videre i hukommelsen */ }
+}
+
+(function indlaes(){
+  const g = hent() || {};
+  S = {
+    indst: Object.assign({ planDag:5, antalDage:5, personer:4 }, g.indst || {}),
+    planer: g.planer || {}
+  };
+  const graense = noegle(plusDage(mandag(idag()), -14));
+  Object.keys(S.planer).forEach(function(k){
+    if (k < graense) { delete S.planer[k]; return; }
+    const p = S.planer[k];
+    p.valg = p.valg || {}; p.kryds = p.kryds || {};
+    Object.keys(p.valg).forEach(function(d){ if (!ret(p.valg[d])) delete p.valg[d]; });
+    const gyldig = function(id){ return ret(id) && !erFlerdages(ret(id)); };
+    p.forslag = (p.forslag || []).map(function(id){ return gyldig(id) ? id : null; });
+    p.koe = (p.koe || []).filter(gyldig);
+    p.fravalgt = (p.fravalgt || []).filter(gyldig);
+  });
+})();
+
+/* =====================================================================
+   4. PLANLOGIK
+   ===================================================================== */
+function bland(a){
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function nyPlan(k){
+  const forrige = S.planer[noegle(plusDage(fraNoegle(k), -7))];
+  const brugt = forrige ? Object.keys(forrige.valg).map(function(d){ return forrige.valg[d]; }) : [];
+  const ids = bland(AKTIVE.map(function(r){ return r.id; }));
+  /* Retter fra ugen før kommer bagerst i køen. */
+  const koe = ids.filter(function(id){ return brugt.indexOf(id) < 0; })
+            .concat(ids.filter(function(id){ return brugt.indexOf(id) >= 0; }));
+  S.planer[k] = { status:'kladde', valg:{}, forslag:koe.splice(0, 10), koe:koe, fravalgt:[], kryds:{} };
+  return S.planer[k];
+}
+
+function naeste(p){
+  if (!p.koe.length && p.fravalgt.length) { p.koe = bland(p.fravalgt); p.fravalgt = []; }
+  return p.koe.shift() || null;
+}
+
+function antalValgt(p){ return Object.keys(p.valg).length; }
+
+/* Hvor mange retter ugen skal have. Er noget af ugen gået, kan der højst vælges til de dage, der er tilbage. */
+function maal(k){
+  const m = fraNoegle(k), t = idag();
+  let ledige = 0;
+  for (let d = 0; d < 7; d++) if (plusDage(m, d) >= t) ledige++;
+  return Math.max(1, Math.min(S.indst.antalDage, ledige));
+}
+
+function rydKryds(p, dag){
+  const pre = dag + '|';
+  Object.keys(p.kryds).forEach(function(k){ if (k.indexOf(pre) === 0) delete p.kryds[k]; });
+}
+function fjernDag(p, dag){ delete p.valg[dag]; rydKryds(p, dag); p.status = 'kladde'; }
+function tildel(p, dag, id){
+  if (!ret(id).fast) Object.keys(p.valg).forEach(function(d){ if (p.valg[d] === id) { delete p.valg[d]; rydKryds(p, d); } });
+  p.valg[dag] = id; rydKryds(p, dag); p.status = 'kladde';
+}
+function dagFor(p, id){
+  const d = Object.keys(p.valg).filter(function(x){ return p.valg[x] === id; });
+  return d.map(Number).sort(function(a,b){ return a-b; });
+}
+
+function skalMinde(){
+  const p = S.planer[naesteUge()];
+  return ugedag(idag()) >= S.indst.planDag && !(p && p.status === 'faerdig');
+}
+
+/* =====================================================================
+   5. INDKØBSLISTE
+   ===================================================================== */
+const FLERTAL = { 'dåse':'dåser', 'pose':'poser', 'bundt':'bundter', 'skive':'skiver' };
+function tal(n){ return String(Math.round(n * 100) / 100).replace('.', ','); }
+function maengde(raa, e){
+  let v;
+  if (e === 'g') {
+    if (raa >= 1000) return tal(Math.round(raa / 50) * 50 / 1000) + ' kg';
+    v = raa < 100 ? Math.max(5, Math.round(raa / 5) * 5) : Math.round(raa / 25) * 25;
+    return v >= 1000 ? tal(v / 1000) + ' kg' : v + ' g';
+  }
+  if (e === 'dl') { v = Math.max(.5, Math.round(raa * 2) / 2); return v >= 10 ? tal(v / 10) + ' l' : tal(v) + ' dl'; }
+  if (e === 'spsk' || e === 'tsk') { v = Math.max(.5, Math.round(raa * 2) / 2); return tal(v) + ' ' + e; }
+  v = Math.max(1, Math.ceil(raa - 1e-9));
+  return v + ' ' + (v !== 1 && FLERTAL[e] ? FLERTAL[e] : e);
+}
+function faktor(){ return S.indst.personer / BASIS_PERSONER; }
+
+/* Én gruppe pr. valgt ret. */
+function prRet(k){
+  const p = S.planer[k], f = faktor();
+  return Object.keys(p.valg).map(Number).sort(function(a,b){ return a-b; }).map(function(dag){
+    const r = ret(p.valg[dag]);
+    return { dag:dag, ret:r, varer:r.ing.map(function(i){
+      return { navn:i[0], enhed:i[2], kat:i[3], raa:i[1] * f, id:dag + '|' + i[0] + '|' + i[2] };
+    })};
+  });
+}
+/* Samme vare fra flere retter lægges sammen og grupperes efter afdeling. */
+function samlet(k){
+  const kort = {};
+  prRet(k).forEach(function(g){
+    g.varer.forEach(function(v){
+      const n = v.navn + '|' + v.enhed;
+      const s = kort[n] || (kort[n] = { k:n, navn:v.navn, enhed:v.enhed, kat:v.kat, raa:0, ids:[], retter:[] });
+      s.raa += v.raa; s.ids.push(v.id);
+      if (s.retter.indexOf(g.ret.navn) < 0) s.retter.push(g.ret.navn);
+    });
+  });
+  const alle = Object.keys(kort).map(function(n){ return kort[n]; });
+  return KAT.map(function(c){
+    return { navn:c[1], varer:alle.filter(function(v){ return v.kat === c[0]; })
+      .sort(function(a,b){ return a.navn.localeCompare(b.navn, 'da'); }) };
+  }).filter(function(g){ return g.varer.length; });
+}
+
+/* =====================================================================
+   6. VISNING
+   ===================================================================== */
+const ui = { fane:'ugen', planUge:null, listeUge:null, listeVisning:'ret', aaben:{}, ark:null, nyDag:null };
+function $(s){ return document.querySelector(s); }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+function flertal(n, en, flere){ return n + ' ' + (n === 1 ? en : flere); }
+function plan(){ return S.planer[ui.planUge]; }
+
+function tallerkener(p, k){
+  const m = fraNoegle(k), t = +idag();
+  let h = '<span class="tallerkener" aria-hidden="true">';
+  for (let d = 0; d < 7; d++) {
+    h += '<span class="tal' + (p && p.valg[d] ? ' fyldt' : '') + (+plusDage(m, d) === t ? ' idag' : '') +
+         (ui.nyDag === d ? ' pop' : '') + '"><i>' + DAGE_BOGSTAV[d] + '</i></span>';
+  }
+  return h + '</span>';
+}
+
+function ingrListe(r){
+  if (!r.ing.length) return '<p class="ark-note">Ingen fælles indkøb.</p>';
+  const f = faktor();
+  return '<ul class="ingr">' + r.ing.map(function(i){
+    return '<li><span>' + esc(i[0]) + '</span><span>' + maengde(i[1] * f, i[2]) + '</span></li>';
+  }).join('') + '</ul>';
+}
+
+/* ---------- Ugen ---------- */
+function visUgen(){
+  const t = idag(), wd = ugedag(t), dk = denneUge(), nk = naesteUge();
+  const pd = S.planer[dk], pn = S.planer[nk];
+  let h = '<header class="top"><h1>Aftensmad</h1><p class="dato">' + DAGE[wd] + ' ' + t.getDate() + '. ' +
+          MDR[t.getMonth()] + ', uge ' + ugeNr(t) + '</p></header>';
+
+  const minder = skalMinde();
+  if (minder) {
+    const igang = pn && antalValgt(pn) > 0;
+    h += '<section class="minder"><h2>Så skal der vælges aftensmad</h2><p>' +
+         (igang ? 'I er i gang med uge ' + ugeNr(fraNoegle(nk)) + ': ' + antalValgt(pn) + ' af ' + maal(nk) + ' retter er valgt.'
+                : ugeTekst(nk) + ' er ikke planlagt endnu.') +
+         '</p><button class="knap" data-a="planlaeg" data-uge="' + nk + '">' + (igang ? 'Fortsæt' : 'Vælg retter') + '</button></section>';
+  }
+
+  if (pd && pd.status === 'faerdig' && pd.valg[wd]) {
+    const r = ret(pd.valg[wd]);
+    h += '<section class="iaften"><h2>I aften</h2><button class="iaften-ret" data-a="retinfo" data-uge="' + dk +
+         '" data-dag="' + wd + '">' + esc(r.navn) + '</button>' + (r.note ? '<p>' + esc(r.note) + '</p>' : '') + '</section>';
+  }
+
+  h += ugeSektion('Denne uge', dk, pd);
+  if (!minder) h += ugeSektion('Næste uge', nk, pn);
+  return h;
+}
+
+function ugeSektion(titel, k, p){
+  const t = +idag(), m = fraNoegle(k), nr = ugeNr(m);
+  let h = '<section class="uge"><div class="uge-hoved"><h2>' + titel + '</h2><span>' + ugeTekst(k) + '</span></div>';
+  if (p && p.status === 'faerdig') {
+    h += tallerkener(p, k) + '<ul class="dagliste">';
+    Object.keys(p.valg).map(Number).sort(function(a,b){ return a-b; }).forEach(function(d){
+      const erIdag = +plusDage(m, d) === t;
+      h += '<li><button class="dagrk' + (erIdag ? ' idag' : '') + '" data-a="retinfo" data-uge="' + k + '" data-dag="' + d +
+           '"><span class="dag">' + (erIdag ? 'I dag' : DAGE_KORT[d]) + '</span><span class="navn">' + esc(ret(p.valg[d]).navn) + '</span></button></li>';
+    });
+    h += '</ul><div class="handlinger"><button class="knap let" data-a="planlaeg" data-uge="' + k +
+         '">Ret plan</button><button class="knap" data-a="seliste" data-uge="' + k + '">Se indkøbsliste</button></div>';
+  } else if (p && antalValgt(p) > 0) {
+    h += '<p class="uge-tom">Kladde: ' + antalValgt(p) + ' af ' + maal(k) + ' retter er valgt.</p>' +
+         '<button class="knap" data-a="planlaeg" data-uge="' + k + '">Fortsæt</button>';
+  } else {
+    h += '<p class="uge-tom">Ikke planlagt endnu.</p><button class="knap let" data-a="planlaeg" data-uge="' + k +
+         '">Planlæg uge ' + nr + '</button>';
+  }
+  return h + '</section>';
+}
+
+/* ---------- Planlægning ---------- */
+function visPlanlaeg(){
+  const k = ui.planUge, p = plan(), antal = antalValgt(p), mm = maal(k), mangler = mm - antal;
+  const bud = p.forslag.filter(Boolean).length;
+  let h = '<header class="top smal"><button class="tilbage" data-a="tilbage">Tilbage</button><h1>Vælg aftensmad</h1>' +
+          '<p class="dato">' + ugeTekst(k) + '</p></header>';
+
+  h += '<button class="status" data-a="ugeark" aria-label="Se ugens valg. ' + antal + ' af ' + mm + ' valgt.">' +
+       tallerkener(p, k) + '<span class="status-tekst">' + antal + ' af ' + mm + ' valgt</span></button>';
+
+  h += '<section class="afsnit"><h2>' + bud + ' bud på aftensmad</h2>' +
+       '<p>Vælg en dag til de retter, I vil have. Siger I nej tak, kommer der et nyt bud.</p><ul class="bud">';
+  p.forslag.forEach(function(id, i){ if (id) h += budRk(p, id, i); });
+  h += '</ul></section>';
+
+  h += '<section class="afsnit"><h2>Altid en mulighed</h2><ul class="bud">' +
+       FASTE.map(function(r){ return fastRk(p, r); }).join('') + '</ul></section>';
+
+  const tekst = mangler > 0 ? 'Vælg ' + flertal(mangler, 'ret', 'retter') + ' mere'
+              : mangler < 0 ? 'Fjern ' + flertal(-mangler, 'ret', 'retter')
+              : 'Lav indkøbsliste';
+  h += '<div class="bund"><button class="knap" data-a="faerdig"' + (mangler !== 0 ? ' disabled' : '') + '>' + tekst + '</button></div>';
+  return h;
+}
+
+function budRk(p, id, i){
+  const r = ret(id), dage = dagFor(p, id), valgt = dage.length > 0, aaben = !!ui.aaben[id];
+  let h = '<li class="bud-rk' + (valgt ? ' valgt' : '') + '">' +
+          '<button class="bud-navn" data-a="fold" data-id="' + id + '" aria-expanded="' + aaben + '">' +
+          '<span class="navn">' + esc(r.navn) + '</span>' +
+          (valgt ? '<span class="maerke">' + DAGE[dage[0]] + '</span>' : '<span class="meta">' + r.tid + ' min</span>') + '</button>';
+  if (aaben) h += ingrListe(r).replace('ark-note', 'bud-note');
+  h += '<div class="bud-valg">';
+  if (valgt) {
+    h += '<button class="knap let" data-a="fjern" data-dag="' + dage[0] + '">Fjern</button>' +
+         '<button class="knap let" data-a="vaelgdag" data-id="' + id + '">Skift dag</button>';
+  } else {
+    h += '<button class="knap let" data-a="nej" data-i="' + i + '">Nej tak</button>' +
+         '<button class="knap" data-a="vaelgdag" data-id="' + id + '">Vælg dag</button>';
+  }
+  return h + '</div></li>';
+}
+
+function fastRk(p, r){
+  const dage = dagFor(p, r.id);
+  let h = '<li class="bud-rk' + (dage.length ? ' valgt' : '') + '"><div class="bud-navn"><span class="navn">' + esc(r.navn) +
+          '</span></div><p class="bud-note">' + esc(r.note) + '</p>';
+  if (dage.length) {
+    h += '<div class="chips">' + dage.map(function(d){
+      return '<button class="maerke" data-a="fjern" data-dag="' + d + '" aria-label="Fjern ' + esc(r.navn) + ' fra ' +
+             DAGE[d].toLowerCase() + '">' + DAGE[d] + ' <span aria-hidden="true">×</span></button>';
+    }).join('') + '</div>';
+  }
+  return h + '<div class="bud-valg"><button class="knap let" data-a="vaelgdag" data-id="' + r.id + '">Vælg dag</button></div></li>';
+}
+
+/* ---------- Indkøb ---------- */
+function visIndkoeb(){
+  const fra = denneUge();
+  const klare = Object.keys(S.planer).filter(function(k){ return k >= fra && S.planer[k].status === 'faerdig'; }).sort();
+  let h = '<header class="top"><h1>Indkøb</h1>';
+  if (!klare.length) {
+    return h + '<p class="dato">Der er ingen indkøbsliste endnu. Vælg ugens retter, så laver appen listen.</p></header>' +
+           '<section class="uge"><button class="knap" data-a="planlaeg" data-uge="' + naesteUge() + '">Vælg retter</button></section>';
+  }
+  const k = klare.indexOf(ui.listeUge) >= 0 ? ui.listeUge : klare[klare.length - 1];
+  ui.listeUge = k;
+  const p = S.planer[k], grupper = prRet(k);
+  let ialt = 0, koebt = 0;
+  grupper.forEach(function(g){ g.varer.forEach(function(v){ ialt++; if (p.kryds[v.id]) koebt++; }); });
+
+  h += '<p class="dato">' + ugeTekst(k) + ', til ' + flertal(S.indst.personer, 'person', 'personer') + '</p></header>';
+
+  if (klare.length > 1) {
+    h += '<div class="seg" role="group" aria-label="Vælg uge">' + klare.map(function(u){
+      return '<button data-a="listeuge" data-uge="' + u + '" aria-pressed="' + (u === k) + '">Uge ' + ugeNr(fraNoegle(u)) + '</button>';
+    }).join('') + '</div>';
+  }
+
+  h += '<div class="fremdrift"><p>' + (ialt ? koebt + ' af ' + ialt + ' varer er købt' : 'Ugens retter kræver ingen indkøb') + '</p>' +
+       '<div class="spor"><div class="fyld" style="width:' + (ialt ? Math.round(koebt / ialt * 100) : 0) + '%"></div></div></div>';
+
+  h += '<div class="seg" role="group" aria-label="Vælg visning">' +
+       '<button data-a="visning" data-v="ret" aria-pressed="' + (ui.listeVisning === 'ret') + '">Pr. ret</button>' +
+       '<button data-a="visning" data-v="samlet" aria-pressed="' + (ui.listeVisning === 'samlet') + '">Samlet</button></div>';
+
+  if (ui.listeVisning === 'ret') {
+    grupper.forEach(function(g){
+      h += '<section class="gruppe"><h2>' + esc(g.ret.navn) + '</h2><p class="under">' + DAGE[g.dag] + '</p>';
+      if (!g.varer.length) { h += '<p class="ingen">Ingen fælles indkøb.</p></section>'; return; }
+      h += '<ul class="varer">' + g.varer.map(function(v){
+        return '<li><button class="vare" role="checkbox" aria-checked="' + !!p.kryds[v.id] + '" data-a="kryds" data-uge="' + k +
+               '" data-id="' + esc(v.id) + '"><span class="boks"></span><span class="vnavn"><b>' + esc(v.navn) +
+               '</b></span><span class="vm">' + maengde(v.raa, v.enhed) + '</span></button></li>';
+      }).join('') + '</ul></section>';
+    });
+  } else {
+    samlet(k).forEach(function(g){
+      h += '<section class="gruppe"><h2>' + g.navn + '</h2><ul class="varer">' + g.varer.map(function(v){
+        const alle = v.ids.every(function(id){ return p.kryds[id]; });
+        return '<li><button class="vare" role="checkbox" aria-checked="' + alle + '" data-a="krydsalle" data-uge="' + k +
+               '" data-k="' + esc(v.k) + '"><span class="boks"></span><span class="vnavn"><b>' + esc(v.navn) + '</b><small>' +
+               esc(v.retter.join(', ')) + '</small></span><span class="vm">' + maengde(v.raa, v.enhed) + '</span></button></li>';
+      }).join('') + '</ul></section>';
+    });
+  }
+
+  if (koebt) h += '<button class="knap let bred nulstil" data-a="nulkryds" data-uge="' + k + '">Fjern alle krydser</button>';
+  return h;
+}
+
+/* ---------- Indstillinger ---------- */
+function visIndst(){
+  const i = S.indst, skjult = RETTER.length - AKTIVE.length;
+  let h = '<header class="top"><h1>Indstillinger</h1></header>';
+
+  h += '<section class="indst"><h2>Planlægningsdag</h2><p>Den dag appen minder jer om at vælge aftensmad til ugen efter. ' +
+       'Påmindelsen vises her i appen.</p><div class="dagvalg" role="group" aria-label="Planlægningsdag">' +
+       DAGE_KORT.map(function(n, d){
+         return '<button data-a="plandag" data-dag="' + d + '" aria-pressed="' + (i.planDag === d) + '" aria-label="' + DAGE[d] + '">' + n + '</button>';
+       }).join('') + '</div></section>';
+
+  h += '<section class="indst"><h2>Dage med aftensmad</h2><p>Hvor mange retter I vælger til en uge.</p>' +
+       '<div class="seg" role="group" aria-label="Dage med aftensmad">' + [2,5,7].map(function(n){
+         return '<button data-a="antaldage" data-n="' + n + '" aria-pressed="' + (i.antalDage === n) + '">' +
+                (n === 7 ? 'Hele ugen' : n + ' dage') + '</button>';
+       }).join('') + '</div></section>';
+
+  h += '<section class="indst"><h2>Personer i husstanden</h2><p>Mængderne i indkøbslisten regnes om, så de passer til jer.</p>' +
+       '<div class="taeller"><button data-a="personer" data-delta="-1" aria-label="En person færre"' + (i.personer <= 1 ? ' disabled' : '') +
+       '>−</button><output aria-live="polite">' + i.personer + '</output><button data-a="personer" data-delta="1" aria-label="En person mere"' +
+       (i.personer >= 12 ? ' disabled' : '') + '>+</button></div></section>';
+
+  h += '<section class="indst"><h2>Retter</h2><p>' + AKTIVE.length + ' pladsholder-retter er i brug. Retter med »dag 1« eller »dag 2« i navnet ' +
+       'kommer ikke med i forslagene' + (skjult ? ' (' + skjult + ' lige nu)' : '') + '.</p></section>';
+
+  h += '<section class="indst"><h2>Ryd alle planer</h2><p>Sletter ugeplaner og krydser på denne telefon. Indstillingerne bliver stående.</p>' +
+       '<button class="knap fare" data-a="ryd">Ryd alle planer</button></section>';
+  return h;
+}
+
+/* ---------- Faner ---------- */
+const IKON = {
+  ugen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><circle cx="12" cy="12" r="5"/></svg>',
+  indkoeb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3.5" width="16" height="17" rx="3"/><path d="M8 9l1.6 1.6L12.5 7.6M8 15l1.6 1.6 2.9-3M15 9.5h1.5M15 15.5h1.5"/></svg>',
+  indst:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>'
+};
+function visFaner(){
+  const f = [['ugen','Ugen'],['indkoeb','Indkøb'],['indst','Indstillinger']];
+  $('#faner').innerHTML = '<div class="inde">' + f.map(function(x){
+    return '<button class="fane" data-a="fane" data-f="' + x[0] + '"' + (ui.fane === x[0] ? ' aria-current="page"' : '') + '>' +
+           IKON[x[0]] + '<span>' + x[1] + '</span>' +
+           (x[0] === 'ugen' && skalMinde() ? '<span class="prik" role="img" aria-label="Tid til at vælge aftensmad"></span>' : '') + '</button>';
+  }).join('') + '</div>';
+}
+
+/* ---------- Ark ---------- */
+function visArk(){
+  const rod = $('#ark');
+  if (!ui.ark) { rod.innerHTML = ''; document.body.classList.remove('laast'); return; }
+  const a = ui.ark;
+  let h = '';
+
+  if (a.type === 'dag') {
+    const k = ui.planUge, p = plan(), r = ret(a.id), m = fraNoegle(k), t = idag();
+    const antal = antalValgt(p), mm = maal(k);
+    const flytter = !r.fast && dagFor(p, a.id).length > 0;
+    const fuld = antal >= mm && !flytter;
+    h += '<h2 class="ark-titel">Hvilken dag?</h2><p class="ark-under">' + esc(r.navn) + '</p><div class="arkliste">';
+    for (let d = 0; d < 7; d++) {
+      const dato = plusDage(m, d), opt = p.valg[d];
+      let s = '', dis = false, kl = '';
+      if (dato < t) { s = 'Overstået'; dis = true; }
+      else if (opt === a.id) { s = 'Valgt. Tryk for at fjerne'; kl = ' optaget'; }
+      else if (opt) { s = 'Bytter med ' + ret(opt).navn; }
+      else if (fuld) { s = 'Ugen er fuld'; dis = true; }
+      h += '<button class="arkrk" data-a="saet" data-dag="' + d + '"' + (dis ? ' disabled' : '') + '><span class="d">' + DAGE[d] +
+           '<small>' + dato.getDate() + '. ' + MDR_KORT[dato.getMonth()] + '</small></span><span class="s' + kl + '">' + esc(s) + '</span></button>';
+    }
+    h += '</div>';
+    if (fuld) h += '<p class="ark-note">I har valgt ' + flertal(mm, 'ret', 'retter') + '. Vælg en optaget dag for at bytte.</p>';
+    h += '<button class="knap let bred" data-a="luk">Annuller</button>';
+  }
+
+  else if (a.type === 'uge') {
+    const k = ui.planUge, p = plan(), m = fraNoegle(k);
+    h += '<h2 class="ark-titel">Ugens valg</h2><p class="ark-under">' + ugeTekst(k) + '</p><div class="arkliste">';
+    for (let d = 0; d < 7; d++) {
+      const dato = plusDage(m, d), opt = p.valg[d];
+      h += '<div class="arkrk"><span class="d">' + DAGE[d] + '<small>' + dato.getDate() + '. ' + MDR_KORT[dato.getMonth()] + '</small></span>' +
+           (opt ? '<span class="s optaget">' + esc(ret(opt).navn) + '</span><button class="knap let" data-a="fjern" data-dag="' + d +
+                  '" aria-label="Fjern ' + esc(ret(opt).navn) + '">Fjern</button>'
+                : '<span class="s">Ledig</span>') + '</div>';
+    }
+    h += '</div><button class="knap let bred" data-a="luk">Luk</button>';
+  }
+
+  else if (a.type === 'ret') {
+    const p = S.planer[a.uge], r = ret(p.valg[a.dag]), dato = plusDage(fraNoegle(a.uge), a.dag);
+    h += '<h2 class="ark-titel">' + esc(r.navn) + '</h2><p class="ark-under">' + DAGE[a.dag] + ' ' + dato.getDate() + '. ' +
+         MDR[dato.getMonth()] + (r.ing.length ? ', til ' + flertal(S.indst.personer, 'person', 'personer') : '') + '</p>' +
+         (r.note && !r.ing.length ? '<p class="ark-note">' + esc(r.note) + '.</p>' : '') + ingrListe(r) +
+         '<button class="knap let bred" data-a="luk">Luk</button>';
+  }
+
+  else if (a.type === 'ryd') {
+    h += '<h2 class="ark-titel">Ryd alle planer?</h2><p class="ark-under">Alle ugeplaner og krydser i indkøbslisten bliver slettet. ' +
+         'Det kan ikke fortrydes.</p><div class="handlinger"><button class="knap let" data-a="luk">Annuller</button>' +
+         '<button class="knap fare" data-a="rydja">Ryd alle planer</button></div>';
+  }
+
+  const fandtes = !!rod.firstChild;
+  rod.innerHTML = '<div class="ark-bag" data-a="luk"></div><div class="ark" role="dialog" aria-modal="true" tabindex="-1">' + h + '</div>';
+  if (fandtes) { rod.firstChild.style.animation = 'none'; rod.lastChild.style.animation = 'none'; }
+  document.body.classList.add('laast');
+  rod.lastChild.focus({ preventScroll:true });
+}
+
+function toast(t){
+  const el = $('#toast');
+  el.textContent = t; el.classList.add('vis');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(function(){ el.classList.remove('vis'); }, 2400);
+}
+
+function vis(){
+  const app = $('#app');
+  /* Husk hvilket element der havde fokus, så tastaturbrugere ikke mister deres plads. */
+  const akt = document.activeElement, husk = akt && app.contains(akt) && akt.dataset.a ? Object.assign({}, akt.dataset) : null;
+
+  document.body.classList.toggle('planlaegger', !!ui.planUge);
+  app.innerHTML = ui.planUge ? visPlanlaeg()
+                : ui.fane === 'indkoeb' ? visIndkoeb()
+                : ui.fane === 'indst' ? visIndst()
+                : visUgen();
+  visFaner();
+  ui.nyDag = null;
+
+  if (husk) {
+    const el = Array.prototype.find.call(app.querySelectorAll('[data-a="' + husk.a + '"]'), function(e){
+      return Object.keys(husk).every(function(n){ return e.dataset[n] === husk[n]; });
+    });
+    if (el) el.focus({ preventScroll:true });
+  }
+}
+
+/* =====================================================================
+   7. HANDLINGER
+   ===================================================================== */
+const H = {
+  fane: function(d){ ui.fane = d.f; ui.planUge = null; vis(); window.scrollTo(0, 0); },
+  planlaeg: function(d){
+    if (!S.planer[d.uge]) nyPlan(d.uge);
+    ui.planUge = d.uge; ui.aaben = {}; gem(); vis(); window.scrollTo(0, 0);
+  },
+  tilbage: function(){ ui.planUge = null; ui.fane = 'ugen'; vis(); window.scrollTo(0, 0); },
+  nej: function(d){
+    const p = plan(), i = +d.i, gammel = p.forslag[i];
+    p.forslag[i] = naeste(p); p.fravalgt.push(gammel);
+    gem(); vis();
+  },
+  fold: function(d){ ui.aaben[d.id] = !ui.aaben[d.id]; vis(); },
+  vaelgdag: function(d){ ui.ark = { type:'dag', id:d.id }; visArk(); },
+  saet: function(d){
+    const p = plan(), dag = +d.dag, id = ui.ark.id;
+    if (p.valg[dag] === id) fjernDag(p, dag);
+    else { tildel(p, dag, id); ui.nyDag = dag; }
+    ui.ark = null; gem(); visArk(); vis();
+  },
+  fjern: function(d){ fjernDag(plan(), +d.dag); gem(); if (ui.ark) visArk(); vis(); },
+  ugeark: function(){ ui.ark = { type:'uge' }; visArk(); },
+  faerdig: function(){
+    const k = ui.planUge, p = plan();
+    if (antalValgt(p) !== maal(k)) return;
+    p.status = 'faerdig'; ui.planUge = null; ui.fane = 'indkoeb'; ui.listeUge = k;
+    gem(); vis(); window.scrollTo(0, 0); toast('Indkøbslisten er klar');
+  },
+  retinfo: function(d){ ui.ark = { type:'ret', uge:d.uge, dag:+d.dag }; visArk(); },
+  seliste: function(d){ ui.fane = 'indkoeb'; ui.listeUge = d.uge; vis(); window.scrollTo(0, 0); },
+  kryds: function(d){
+    const p = S.planer[d.uge];
+    if (p.kryds[d.id]) delete p.kryds[d.id]; else p.kryds[d.id] = 1;
+    gem(); vis();
+  },
+  krydsalle: function(d){
+    const p = S.planer[d.uge];
+    let v = null;
+    samlet(d.uge).forEach(function(g){ g.varer.forEach(function(x){ if (x.k === d.k) v = x; }); });
+    if (!v) return;
+    const alle = v.ids.every(function(id){ return p.kryds[id]; });
+    v.ids.forEach(function(id){ if (alle) delete p.kryds[id]; else p.kryds[id] = 1; });
+    gem(); vis();
+  },
+  visning: function(d){ ui.listeVisning = d.v; vis(); },
+  listeuge: function(d){ ui.listeUge = d.uge; vis(); },
+  nulkryds: function(d){ S.planer[d.uge].kryds = {}; gem(); vis(); toast('Alle krydser er fjernet'); },
+  plandag: function(d){ S.indst.planDag = +d.dag; gem(); vis(); },
+  antaldage: function(d){ S.indst.antalDage = +d.n; gem(); vis(); },
+  personer: function(d){ S.indst.personer = Math.min(12, Math.max(1, S.indst.personer + (+d.delta))); gem(); vis(); },
+  ryd: function(){ ui.ark = { type:'ryd' }; visArk(); },
+  rydja: function(){ S.planer = {}; ui.ark = null; ui.listeUge = null; gem(); visArk(); vis(); toast('Alle planer er ryddet'); },
+  luk: function(){ ui.ark = null; visArk(); }
+};
+
+document.addEventListener('click', function(e){
+  const el = e.target.closest('[data-a]');
+  if (!el || el.disabled) return;
+  const f = H[el.dataset.a];
+  if (f) f(el.dataset);
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && ui.ark) H.luk();
+});
+/* Appen kan stå åben hen over midnat: opdater, når den kommer frem igen. */
+document.addEventListener('visibilitychange', function(){
+  if (!document.hidden && !ui.ark) vis();
+});
+
+vis();
+})();
+</script>
+</body>
+</html>
